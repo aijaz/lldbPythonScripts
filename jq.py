@@ -20,9 +20,13 @@ from subprocess import Popen, PIPE, STDOUT
 def create_jq_options():
     usage = "usage: %prog [options] <jq_filter> <variable_name>"
     description = '''This command will run the jq using jq_filter on the
-NSString variable_name, which is expected to contain valid JSON. As a
+NSString local variable variable_name, which is expected to contain valid JSON. As a
 side effect, the JSON contained in variable_name will be saved in
 /tmp/jq_json and the filter will be saved in /tmp/jq_prog.
+
+Example:
+%prog '.[]|{firstName, lastName}' jsonStr
+%prog '.[]|select(.id=="f9a5282e-523f-4b83-a6ca-566e3746a4c7").schools[1].school.mainLocation.address.city' body
 '''
     parser = optparse.OptionParser(
         description=description,
@@ -46,13 +50,23 @@ side effect, the JSON contained in variable_name will be saved in
 
 
 def jq_command(debugger, command, result, dict):
-    # Use the Shell Lexer to properly parse up command options just like a
-    # shell would
-    
+
+    # path to the jq executable. This is the only variable you need to change
     jq_exe = "/Users/aijaz/local/bin/jq"
+
+    # the filter will be written to this file and will be invoked via jq -f
+    # The benefit of saving the filter in a file is that we don't have to
+    # worry about escaping special characters.
     jq_prog_file = "/tmp/jq_prog"
+
+    # the value of the NSString variable will be saved in this file
+    # jq will be invoked on the file, not using stdin
+    # For some reason, large amounts of data were causing the lldb
+    # rpc server to crash when using stdin
     jq_json_file = "/tmp/jq_json"
 
+    # Use the Shell Lexer to properly parse up command options just like a
+    # shell would
     command_args = shlex.split(command)
     parser = create_jq_options()
     try:
@@ -77,6 +91,7 @@ def jq_command(debugger, command, result, dict):
     val = frame.var(args[1])
     val_string = val.GetObjectDescription()
 
+    #
     f = open(jq_json_file, 'w')
     f.write(val_string)
     f.close()
@@ -94,7 +109,9 @@ def jq_command(debugger, command, result, dict):
     if options.sort :
         sort = "-S"
 
+    # invoke jq and print the output to the result variable
     print >>result, (commands.getoutput("%s %s %s -f %s %s" % (jq_exe, compact, sort, jq_prog_file, jq_json_file) ))
+
     # not returning anything is akin to returning success
 
 
