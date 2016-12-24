@@ -95,6 +95,7 @@ def jq_command(debugger, command, result, dict):
         sort = "-S"
 
     print >>result, (commands.getoutput("%s %s %s -f %s %s" % (jq_exe, compact, sort, jq_prog_file, jq_json_file) ))
+    # not returning anything is akin to returning success
 
 
 def __lldb_init_module(debugger, dict):
