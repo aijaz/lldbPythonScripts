@@ -6,27 +6,31 @@
 # # To use this in the embedded python interpreter using "lldb" just
 # import it with the full path using the "command script import"
 # command
-#   (lldb) command script import /path/to/cmdtemplate.py
+#   (lldb) command script import /path/to/file.py
+#
+# Inspired by http://llvm.org/svn/llvm-project/lldb/trunk/examples/python/cmdtemplate.py
 #----------------------------------------------------------------------
 
 import lldb
 import commands
 import optparse
 import shlex
-from subprocess import Popen, PIPE, STDOUT
-
-
 
 def create_jq_options():
+    """Parse the options passed to the command. 
+    Also provides the description string that's used as
+    the command's help string.
+    """
     usage = "usage: %prog [options] <jq_filter> <variable_name>"
     description = '''This command will run the jq using jq_filter on the
-NSString local variable variable_name, which is expected to contain valid JSON. As a
-side effect, the JSON contained in variable_name will be saved in
+NSString local variable variable_name, which is expected to contain valid JSON. 
+As a side effect, the JSON contained in variable_name will be saved in
 /tmp/jq_json and the filter will be saved in /tmp/jq_prog.
 
 Example:
 %prog '.[]|{firstName, lastName}' jsonStr
-%prog '.[]|select(.id=="f9a5282e-523f-4b83-a6ca-566e3746a4c7").schools[1].school.mainLocation.address.city' body
+%prog '.[]|select(.id=="f9a5282e-523f-4b83-a6ca-566e3746a4c7").schools[1].\
+school.mainLocation.address.city' body
 '''
     parser = optparse.OptionParser(
         description=description,
@@ -48,7 +52,7 @@ Example:
         default=False)
     return parser
 
-
+# The actual python function that is bound to the lldb command.
 def jq_command(debugger, command, result, dict):
 
     # path to the jq executable. This is the only variable you need to change
@@ -72,8 +76,9 @@ def jq_command(debugger, command, result, dict):
     try:
         (options, args) = parser.parse_args(command_args)
     except:
-        # if you don't handle exceptions, passing an incorrect argument to the OptionParser will cause LLDB to exit
-        # (courtesy of OptParse dealing with argument errors by throwing SystemExit)
+        # if you don't handle exceptions, passing an incorrect argument to the 
+        # OptionParser will cause LLDB to exit (courtesy of OptParse dealing 
+        # with argument errors by throwing SystemExit)
         result.SetError("option parsing failed")
         return
 
@@ -87,19 +92,23 @@ def jq_command(debugger, command, result, dict):
     if not frame.IsValid():
         return "no frame here"
 
+    # The command is called like "jq '.' val"
+    # . is the jq program
+    # val is the name of the variable
+    # val_string is the value of the variable
     jq_prog = args[0]
     val = frame.var(args[1])
     val_string = val.GetObjectDescription()
 
-    #
+    # write the json file and jq program to temp files
     f = open(jq_json_file, 'w')
     f.write(val_string)
     f.close()
-
     f = open(jq_prog_file, 'w')
     f.write(jq_prog)
     f.close()
 
+    # default values of the option placeholders
     compact = ""
     sort = ""
 
@@ -110,7 +119,8 @@ def jq_command(debugger, command, result, dict):
         sort = "-S"
 
     # invoke jq and print the output to the result variable
-    print >>result, (commands.getoutput("%s %s %s -f %s %s" % (jq_exe, compact, sort, jq_prog_file, jq_json_file) ))
+    print >>result, (commands.getoutput("%s %s %s -f %s %s" % (
+        jq_exe, compact, sort, jq_prog_file, jq_json_file) ))
 
     # not returning anything is akin to returning success
 
@@ -121,7 +131,10 @@ def __lldb_init_module(debugger, dict):
     # command line command prior to registering it with LLDB below
     parser = create_jq_options()
     jq_command.__doc__ = parser.format_help()
+
     # Add any commands contained in this module to LLDB
-    debugger.HandleCommand(
-        'command script add -f jq.jq_command jq')
-    print 'The "jq" command has been installed, type "help jq" or "jq --help" for detailed help.'
+    debugger.HandleCommand('command script add -f jq.jq_command jq')
+
+    print """The "jq" command has been installed, \
+type "help jq" or "jq --help" for detailed help.\
+"""
