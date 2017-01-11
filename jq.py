@@ -8,7 +8,11 @@
 # command
 #   (lldb) command script import /path/to/file.py
 #
-# Inspired by http://llvm.org/svn/llvm-project/lldb/trunk/examples/python/cmdtemplate.py
+# Inspired by 
+# http://llvm.org/svn/llvm-project/lldb/trunk/examples/python/cmdtemplate.py
+# 
+# For a blog post describing this, visit 
+# http://aijazansari.com/2017/01/11/lldb-python/
 #----------------------------------------------------------------------
 
 import lldb
