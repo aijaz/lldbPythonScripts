@@ -48,6 +48,13 @@ school.mainLocation.address.city' body
         help='compact instead of pretty-printed output',
         default=False)
     parser.add_option(
+        '-n',
+        '--nsstring',
+        action='store_true',
+        dest='nsstring',
+        help='Use this option if the variable is an NNSString. Omit it if it is a Swift String'
+        default=False)
+    parser.add_option(
         '-S',
         '--sort',
         action='store_true',
@@ -56,9 +63,9 @@ school.mainLocation.address.city' body
         default=False)
     return parser
 
+
 # The actual python function that is bound to the lldb command.
 def jq_command(debugger, command, result, dict):
-
     # path to the jq executable. This is the only variable you need to change
     jq_exe = "/Users/aijaz/local/bin/jq"
 
@@ -102,12 +109,17 @@ def jq_command(debugger, command, result, dict):
     # val_string is the value of the variable
     jq_prog = args[0]
     val = frame.var(args[1])
-    val_string = val.GetObjectDescription()
+    if options.nsstring:
+        val_string = val.GetObjectDescription()
+    else :
+        val_string = eval(val.GetObjectDescription())
+
 
     # write the json file and jq program to temp files
     f = open(jq_json_file, 'w')
     f.write(val_string)
     f.close()
+
     f = open(jq_prog_file, 'w')
     f.write(jq_prog)
     f.close()
