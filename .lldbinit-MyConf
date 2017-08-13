@@ -1,0 +1,4 @@
+command script import ~/CocoaApps/lldbPythonScripts/sessionFormatter.py
+
+# Add things here, like type summaries, breakpoints
+# Even execute Swift or Objective-C code with 'expr'

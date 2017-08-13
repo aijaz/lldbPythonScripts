@@ -52,7 +52,7 @@ school.mainLocation.address.city' body
         '--nsstring',
         action='store_true',
         dest='nsstring',
-        help='Use this option if the variable is an NNSString. Omit it if it is a Swift String'
+        help='Use this option if the variable is an NNSString. Omit it if it is a Swift String',
         default=False)
     parser.add_option(
         '-S',
@@ -151,6 +151,4 @@ def __lldb_init_module(debugger, dict):
     # Add any commands contained in this module to LLDB
     debugger.HandleCommand('command script add -f jq.jq_command jq')
 
-    print """The "jq" command has been installed, \
-type "help jq" or "jq --help" for detailed help.\
-"""
+    print """The "jq" command has been installed, type "help jq" or "jq --help" for detailed help."""

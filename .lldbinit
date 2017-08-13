@@ -1,6 +1,7 @@
 command script import /usr/local/opt/chisel/libexec/fblldb.py
-command script import ~/CocoaApps/localChisel/jq.py
-command script import ~/CocoaApps/localChisel/stripQuotes.py
+
+command script import ~/CocoaApps/lldbPythonScripts/stripQuotes.py
+command script import ~/CocoaApps/lldbPythonScripts/jq.py
 
 type summary add --summary-string "${var._identifier}" UIStoryboardSegue
 type summary add --summary-string "(${var._indexes[0]}, ${var._indexes[1]})" IndexPath
